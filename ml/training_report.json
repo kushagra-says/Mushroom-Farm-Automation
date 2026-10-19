@@ -1,0 +1,28 @@
+{
+  "training_rows": 1344,
+  "anomaly_count": 68,
+  "anomaly_rate": 0.050595238095238096,
+  "feature_ranges": {
+    "temperature_C": {
+      "min": 20.85,
+      "p05": 21.66,
+      "median": 24.76,
+      "p95": 27.9985,
+      "max": 28.97
+    },
+    "humidity_percent": {
+      "min": 84.41,
+      "p05": 85.4315,
+      "median": 89.975,
+      "p95": 94.64,
+      "max": 95.56
+    },
+    "co2_ppm": {
+      "min": 639.0,
+      "p05": 734.0,
+      "median": 2339.0,
+      "p95": 4232.0,
+      "max": 4486.0
+    }
+  }
+}

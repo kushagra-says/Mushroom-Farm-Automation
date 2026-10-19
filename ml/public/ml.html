@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Anomaly Detection</title>
+  <style>
+    :root{
+      --bg1:#07111f;
+      --bg2:#0f172a;
+      --card: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.12);
+      --text:#e5eefc;
+      --muted:#a8b4c7;
+      --accent:#37d6c2;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(55,214,194,.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(59,130,246,.18), transparent 22%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      width:min(1200px, 92vw);
+      margin:0 auto;
+      padding:32px 0 48px;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap:20px;
+      align-items:stretch;
+      margin-bottom:20px;
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.28);
+      backdrop-filter: blur(18px);
+    }
+    .hero-main{padding:28px}
+    .eyebrow{
+      display:inline-flex;
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(55,214,194,.12);
+      color:#9ef3e8;
+      font-weight:700;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    h1{
+      margin:14px 0 8px;
+      font-size: clamp(2rem, 4.5vw, 4rem);
+      line-height:1.02;
+      letter-spacing:-.04em;
+    }
+    .lead{margin:0;color:var(--muted);line-height:1.7;max-width:760px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .chip{
+      padding:8px 12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      border-radius:999px;
+      color:#d7e2f2;
+      font-size:13px;
+    }
+    .hero-side{padding:24px}
+    .mini{
+      display:grid;
+      gap:12px;
+    }
+    .mini-card{
+      border-radius:18px;
+      padding:14px 16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+    }
+    .mini-card strong{display:block;font-size:22px;margin-top:2px}
+    .mini-card span{color:var(--muted);font-size:13px}
+    .grid{
+      display:grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap:20px;
+    }
+    .panel-box{padding:22px}
+    .panel-box h2{margin:0 0 6px;font-size:22px}
+    .panel-box p.sub{margin:0 0 18px;color:var(--muted)}
+    .form-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+    }
+    .field{display:flex;flex-direction:column;gap:8px}
+    .field label{font-size:13px;font-weight:700;color:#d6e3f7}
+    .field input, .field select{
+      width:100%;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:var(--text);
+      outline:none;
+      padding:12px 14px;
+    }
+    .field input::placeholder{color:#8ea0be}
+    .field input:focus{
+      border-color: rgba(55,214,194,.6);
+      box-shadow: 0 0 0 4px rgba(55,214,194,.12);
+    }
+    .full{grid-column:1 / -1}
+    .actions{
+      display:flex;
+      gap:12px;
+      margin-top:16px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      border-radius:16px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+      transition: transform .16s ease, opacity .16s ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    .primary{
+      color:#04111f;
+      background: linear-gradient(135deg, #7cf2e5, #37d6c2);
+      box-shadow: 0 16px 30px rgba(55,214,194,.25);
+    }
+    .secondary{
+      background: rgba(255,255,255,.08);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+    .result{
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+    .result-card{
+      width:100%;
+      padding:22px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      justify-content:center;
+    }
+    .status{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.02em;
+      padding:12px 14px;
+      border-radius:16px;
+      display:inline-flex;
+      align-items:center;
+      width:fit-content;
+    }
+    .normal{background:rgba(34,197,94,.14);color:#8bffab}
+    .anomaly{background:rgba(239,68,68,.14);color:#ff9f9f}
+    .score{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .score > div{
+      padding:14px 16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius:16px;
+    }
+    .score span{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+    .score strong{font-size:22px}
+    .explain{
+      margin:0;
+      padding-left:18px;
+      color:#d7e2f2;
+      line-height:1.7;
+    }
+    .footer-note{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .toplink{
+      display:inline-flex;
+      margin-top:14px;
+      color:#8df1e5;
+      text-decoration:none;
+      font-weight:700;
+    }
+    @media (max-width: 960px){
+      .hero, .grid{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 620px){
+      .form-grid, .score{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="panel hero-main">
+        <div class="eyebrow">ML ANOMALY DETECTION</div>
+        <h1>Environmental risk monitor for oyster mushroom rooms</h1>
+        <p class="lead">
+          Enter temperature, humidity, and CO₂ values to detect abnormal environmental conditions.
+          This page talks to your trained Isolation Forest model through a Flask API.
+        </p>
+        <div class="chips">
+          <span class="chip">Temperature</span>
+          <span class="chip">Humidity</span>
+          <span class="chip">CO₂</span>
+          <span class="chip">Anomaly score</span>
+          <span class="chip">Live model API</span>
+        </div>
+        <a class="toplink" href="/" target="_blank" rel="noreferrer">Back to inventory dashboard →</a>
+      </div>
+
+      <div class="panel hero-side">
+        <div class="mini">
+          <div class="mini-card">
+            <span>Training rows</span>
+            <strong id="trainRows">—</strong>
+          </div>
+          <div class="mini-card">
+            <span>Model status</span>
+            <strong id="modelStatus">Checking…</strong>
+          </div>
+          <div class="mini-card">
+            <span>API endpoint</span>
+            <strong style="font-size:16px">http://localhost:8000</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel panel-box">
+        <h2>Run detection</h2>
+        <p class="sub">Use your own reading or generate a sample.</p>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Temperature (°C)</label>
+            <input id="temperature_C" type="number" step="0.01" placeholder="26.3" />
+          </div>
+          <div class="field">
+            <label>Humidity (%)</label>
+            <input id="humidity_percent" type="number" step="0.01" placeholder="89.5" />
+          </div>
+          <div class="field">
+            <label>CO₂ (ppm)</label>
+            <input id="co2_ppm" type="number" step="1" placeholder="2300" />
+          </div>
+
+          <div class="field full">
+            <label>Quick sample mode</label>
+            <select id="sampleMode">
+              <option value="safe">Safe / Normal reading</option>
+              <option value="warning">Warning reading</option>
+              <option value="anomaly">Anomaly reading</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="analyzeBtn">Analyze reading</button>
+          <button class="secondary" id="sampleBtn">Load sample</button>
+        </div>
+
+        <div class="footer-note">
+          Tip: use this page as a separate ML screen inside your inventory project. The model is trained from your CSV dataset.
+        </div>
+      </div>
+
+      <div class="panel result">
+        <div class="result-card">
+          <h2>Result</h2>
+          <div id="status" class="status normal">Waiting for input</div>
+
+          <div class="score">
+            <div>
+              <span>Prediction</span>
+              <strong id="prediction">—</strong>
+            </div>
+            <div>
+              <span>Confidence</span>
+              <strong id="confidence">—</strong>
+            </div>
+          </div>
+
+          <div class="mini-card">
+            <span>Anomaly score</span>
+            <strong id="score">—</strong>
+          </div>
+
+          <div class="mini-card">
+            <span>Explanation</span>
+            <ul id="explanation" class="explain"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API = "http://localhost:8000";
+
+    const modelStatus = document.getElementById("modelStatus");
+    const trainRows = document.getElementById("trainRows");
+
+    const tempEl = document.getElementById("temperature_C");
+    const humEl = document.getElementById("humidity_percent");
+    const co2El = document.getElementById("co2_ppm");
+
+    const statusEl = document.getElementById("status");
+    const predictionEl = document.getElementById("prediction");
+    const confidenceEl = document.getElementById("confidence");
+    const scoreEl = document.getElementById("score");
+    const explanationEl = document.getElementById("explanation");
+
+    const sampleMode = document.getElementById("sampleMode");
+
+    function setResult(state, payload = {}) {
+      statusEl.className = "status " + (state === "anomaly" ? "anomaly" : "normal");
+      statusEl.textContent = state === "anomaly" ? "⚠️ Anomaly detected" : "✅ Normal environment";
+
+      predictionEl.textContent = payload.prediction ? payload.prediction.toUpperCase() : "—";
+      confidenceEl.textContent = payload.confidence != null ? payload.confidence + "%" : "—";
+      scoreEl.textContent = payload.score != null ? payload.score : "—";
+
+      explanationEl.innerHTML = "";
+      (payload.explanation || []).forEach((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        explanationEl.appendChild(li);
+      });
+    }
+
+    function loadSample() {
+      const mode = sampleMode.value;
+
+      if (mode === "safe") {
+        tempEl.value = 24.8;
+        humEl.value = 90.0;
+        co2El.value = 2100;
+      } else if (mode === "warning") {
+        tempEl.value = 27.8;
+        humEl.value = 85.2;
+        co2El.value = 2600;
+      } else {
+        tempEl.value = 29.4;
+        humEl.value = 76.0;
+        co2El.value = 4200;
+      }
+    }
+
+    async function fetchHealth() {
+      try {
+        const res = await fetch(`${API}/health`);
+        const data = await res.json();
+        modelStatus.textContent = "Online";
+        trainRows.textContent = data.training_rows ?? "—";
+      } catch (e) {
+        modelStatus.textContent = "Offline";
+      }
+    }
+
+    async function analyze() {
+      const payload = {
+        temperature_C: Number(tempEl.value),
+        humidity_percent: Number(humEl.value),
+        co2_ppm: Number(co2El.value)
+      };
+
+      if (Object.values(payload).some((v) => Number.isNaN(v))) {
+        alert("Please enter valid values for temperature, humidity, and CO₂.");
+        return;
+      }
+
+      statusEl.textContent = "Analyzing…";
+      predictionEl.textContent = "—";
+      confidenceEl.textContent = "—";
+      scoreEl.textContent = "—";
+      explanationEl.innerHTML = "";
+
+      try {
+        const res = await fetch(`${API}/predict`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Prediction failed");
+        }
+
+        setResult(data.prediction, data);
+      } catch (err) {
+        statusEl.className = "status anomaly";
+        statusEl.textContent = "⚠️ API error";
+        predictionEl.textContent = "ERROR";
+        confidenceEl.textContent = "—";
+        scoreEl.textContent = "—";
+
+        explanationEl.innerHTML = "";
+        const li = document.createElement("li");
+        li.textContent = err.message;
+        explanationEl.appendChild(li);
+      }
+    }
+
+    document.getElementById("analyzeBtn").addEventListener("click", analyze);
+    document.getElementById("sampleBtn").addEventListener("click", loadSample);
+
+    fetchHealth();
+    loadSample();
+  </script>
+</body>
+</html>
