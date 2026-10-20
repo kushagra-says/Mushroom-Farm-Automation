@@ -51,6 +51,12 @@ psql -U postgres -d postgres -c "CREATE DATABASE inventory_db;"
 psql -U postgres -d inventory_db -f server/schema.sql
 ```
 
+If `inventory_db` was created from an older copy of the schema, apply the migration instead of recreating the database:
+
+```bash
+psql -U postgres -d inventory_db -f server/migrations/001_sync_inventory.sql
+```
+
 ### Step 2: Configure Database Connection
 
 Create a `.env` file in the `server/` folder (copy the example):
@@ -97,6 +103,16 @@ cd client
 npm start
 ```
 Client runs on http://localhost:3000
+
+## Testing
+
+The project has unit, component, ML, and PostgreSQL integration suites. See [TESTING.md](TESTING.md) for the full guide, coverage matrix, and database test setup.
+
+```bash
+cd client && CI=true npm test -- --watchAll=false
+cd ../server && npm run test:unit
+cd ../ml && python -m pytest -q
+```
 
 ## API Endpoints
 

@@ -225,7 +225,7 @@
           <span class="chip">Anomaly score</span>
           <span class="chip">Live model API</span>
         </div>
-        <a class="toplink" href="/" target="_blank" rel="noreferrer">Back to inventory dashboard →</a>
+        <a id="clientLink" class="toplink" href="http://localhost:3000" target="_blank" rel="noreferrer">Back to inventory dashboard →</a>
       </div>
 
       <div class="panel hero-side">
@@ -317,6 +317,9 @@
 
   <script>
     const API = "http://localhost:8000";
+    const CLIENT_URL = "http://localhost:3000";
+
+    document.getElementById("clientLink").href = CLIENT_URL;
 
     const modelStatus = document.getElementById("modelStatus");
     const trainRows = document.getElementById("trainRows");
