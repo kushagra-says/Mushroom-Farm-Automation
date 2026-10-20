@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import {
+  formatDate,
+  formatMoney,
+  rowClassForStatus,
+  statusClass,
+  statusForItem,
+} from "./utils/inventory";
 
 const API_URL = "http://localhost:5000/inventory";
 
@@ -14,51 +21,6 @@ const EMPTY_FORM = {
   shelf_life_days: "",
   storage_temp: "",
   quality_grade: "",
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-};
-
-const formatMoney = (value) =>
-  new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value || 0));
-
-const startOfToday = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
-const statusForItem = (item) => {
-  const quantity = Number(item.quantity) || 0;
-  const expiry = item.expiry_date ? new Date(item.expiry_date) : null;
-  const today = startOfToday();
-
-  if (expiry && !Number.isNaN(expiry.getTime())) {
-    if (expiry < today) return "Expired";
-
-    const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-    if (diffDays >= 0 && diffDays <= 3) return "Expiring Soon";
-  }
-
-  if (quantity < 5) return "Low Stock";
-  return "Fresh";
-};
-
-const rowClassForStatus = (status) => {
-  const normalized = status.toLowerCase().replace(/\s+/g, "-");
-  return `row-${normalized}`;
 };
 
 function App() {
@@ -221,27 +183,6 @@ function App() {
     setGradeFilter("All");
     setSortBy("expiry-asc");
   };
-  const [mlStatus, setMlStatus] = useState(null);
-  const checkEnvironment = async () => {
-  try {
-    const res = await fetch("http://localhost:8000/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        temperature: 28,
-        humidity: 80,
-        co2: 900,
-      }),
-    });
-
-    const data = await res.json();
-    setMlStatus(data);
-  } catch (err) {
-    console.error("ML error:", err);
-  }
-};
 
   return (
     <div className="app-shell">
@@ -401,7 +342,7 @@ function App() {
                         <td>{item.storage_temp ?? "-"}°C</td>
                         <td>{item.quality_grade || "-"}</td>
                         <td>
-                          <span className={`status-pill status-${status.toLowerCase().replace(/\s+/g, "-")}`}>
+                          <span className={`status-pill status-${statusClass(status)}`}>
                             {status}
                           </span>
                         </td>
@@ -453,8 +394,9 @@ function App() {
               <form onSubmit={handleSubmit}>
                 <div className="form-grid">
                   <div className="field">
-                    <label>Product Name</label>
+                    <label htmlFor="product_name">Product Name</label>
                     <input
+                      id="product_name"
                       name="product_name"
                       value={formData.product_name}
                       onChange={handleChange}
@@ -464,8 +406,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Batch No</label>
+                    <label htmlFor="batch_no">Batch No</label>
                     <input
+                      id="batch_no"
                       name="batch_no"
                       value={formData.batch_no}
                       onChange={handleChange}
@@ -475,8 +418,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Quantity</label>
+                    <label htmlFor="quantity">Quantity</label>
                     <input
+                      id="quantity"
                       type="number"
                       min="0"
                       name="quantity"
@@ -488,8 +432,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Price</label>
+                    <label htmlFor="price">Price</label>
                     <input
+                      id="price"
                       type="number"
                       min="0"
                       step="0.01"
@@ -502,8 +447,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Harvest Date</label>
+                    <label htmlFor="harvest_date">Harvest Date</label>
                     <input
+                      id="harvest_date"
                       type="date"
                       name="harvest_date"
                       value={formData.harvest_date}
@@ -513,8 +459,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Expiry Date</label>
+                    <label htmlFor="expiry_date">Expiry Date</label>
                     <input
+                      id="expiry_date"
                       type="date"
                       name="expiry_date"
                       value={formData.expiry_date}
@@ -524,8 +471,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Shelf Life (days)</label>
+                    <label htmlFor="shelf_life_days">Shelf Life (days)</label>
                     <input
+                      id="shelf_life_days"
                       type="number"
                       min="0"
                       name="shelf_life_days"
@@ -537,8 +485,9 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <label>Storage Temp (°C)</label>
+                    <label htmlFor="storage_temp">Storage Temp (°C)</label>
                     <input
+                      id="storage_temp"
                       type="number"
                       step="0.1"
                       name="storage_temp"
@@ -550,8 +499,9 @@ function App() {
                   </div>
 
                   <div className="field field-full">
-                    <label>Quality Grade</label>
+                    <label htmlFor="quality_grade">Quality Grade</label>
                     <input
+                      id="quality_grade"
                       name="quality_grade"
                       value={formData.quality_grade}
                       onChange={handleChange}

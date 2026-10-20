@@ -76,6 +76,8 @@ def predict():
         return jsonify(result)
     except KeyError as e:
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
+    except (TypeError, ValueError) as e:
+        return jsonify({"error": f"Invalid value: {str(e)}"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
